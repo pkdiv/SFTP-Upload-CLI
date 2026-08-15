@@ -76,9 +76,11 @@ type Model struct {
 	allFailed    int
 	sessionLog   *uploader.SessionLog
 	batchEnabled bool
+	homeDir      bool
+	pendingFiles []string
 }
 
-func New(cfg *config.Config, configPath string) *Model {
+func New(cfg *config.Config, configPath string, homeDir bool) *Model {
 	m := &Model{
 		cfg:          cfg,
 		configPath:   configPath,
@@ -87,6 +89,7 @@ func New(cfg *config.Config, configPath string) *Model {
 		concurrency:  1,
 		writer:       output.New(os.Stdout),
 		batchEnabled: true,
+		homeDir:      homeDir,
 	}
 	m.profiles = cfg.Names()
 	sort.Strings(m.profiles)
@@ -716,7 +719,14 @@ func (m *Model) viewSummary() string {
 
 func (m *Model) loadFiles() {
 	profile := m.cfg.Profiles[m.profiles[m.selectedProf]]
-	entries, err := os.ReadDir(profile.LocalBase)
+	baseDir := profile.LocalBase
+	if m.homeDir {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			baseDir = home
+		}
+	}
+	entries, err := os.ReadDir(baseDir)
 	if err != nil {
 		return
 	}
@@ -906,6 +916,26 @@ func (m *Model) viewConfirmUpload() string {
 	return b.String()
 }
 
+func readFilesList(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read files list %s: %w", path, err)
+	}
+
+	var files []string
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		files = append(files, line)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("files list %s is empty", path)
+	}
+	return files, nil
+}
+
 func logDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -952,10 +982,24 @@ func (m *Model) startUpload() tea.Cmd {
 	}
 }
 
-func Run(cfg *config.Config, configPath string) error {
-	m := New(cfg, configPath)
+func Run(cfg *config.Config, configPath string, homeDir bool, filesList string) error {
+	m := New(cfg, configPath, homeDir)
+	if filesList != "" {
+		paths, err := readFilesList(filesList)
+		if err != nil {
+			return err
+		}
+		m.pendingFiles = paths
+	}
 	p := tea.NewProgram(m)
 	_, err := p.Run()
 	return err
 }
+
+
+
+
+
+
+
 

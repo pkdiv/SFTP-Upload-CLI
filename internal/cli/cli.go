@@ -21,10 +21,16 @@ type App struct {
 	In         io.Reader
 	Out        io.Writer
 	ErrOut     io.Writer
+	HomeDir    bool
+	FilesList  string
 }
 
 func New(configPath string, in io.Reader, out io.Writer, errOut io.Writer) *App {
 	return &App{ConfigPath: configPath, In: in, Out: out, ErrOut: errOut}
+}
+
+func NewWithHome(configPath string, in io.Reader, out io.Writer, errOut io.Writer, homeDir bool) *App {
+	return &App{ConfigPath: configPath, In: in, Out: out, ErrOut: errOut, HomeDir: homeDir}
 }
 
 func (a *App) Run(args []string) int {
@@ -54,7 +60,7 @@ func (a *App) runTUI() int {
 		return 1
 	}
 
-	if err := tui.Run(cfg, a.ConfigPath); err != nil {
+	if err := tui.Run(cfg, a.ConfigPath, a.HomeDir, a.FilesList); err != nil {
 		fmt.Fprintf(a.ErrOut, "error: %v\n", err)
 		return 1
 	}

@@ -88,6 +88,26 @@ From a file list:
 uplift upload production --files-list files.txt
 ```
 
+### Interactive TUI
+
+Run without arguments:
+
+```bash
+uplift
+```
+
+Use `--home` to browse the user's home directory instead of the profile's local base:
+
+```bash
+uplift --home
+```
+
+Use `--files-list` to skip manual selection and jump to confirmation:
+
+```bash
+uplift --files-list files.txt
+```
+
 The tool resolves each relative path against the profile's local and remote base paths, then prompts for confirmation before uploading.
 
 ## Configuration

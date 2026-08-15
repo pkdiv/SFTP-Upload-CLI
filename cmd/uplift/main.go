@@ -11,6 +11,8 @@ import (
 
 func main() {
 	configPath := flag.String("config", "", "path to configuration file")
+	homeDir := flag.Bool("home", false, "open TUI in user home directory")
+	filesList := flag.String("files-list", "", "path to a text file containing relative file paths, one per line")
 	flag.Parse()
 
 	path := *configPath
@@ -23,7 +25,8 @@ func main() {
 		}
 	}
 
-	app := cli.New(path, os.Stdin, os.Stdout, os.Stderr)
+	app := cli.NewWithHome(path, os.Stdin, os.Stdout, os.Stderr, *homeDir)
+	app.FilesList = *filesList
 	os.Exit(app.Run(flag.Args()))
 }
 

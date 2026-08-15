@@ -34,6 +34,26 @@ Run `uplift` with no arguments to launch the TUI.
 uplift
 ```
 
+### TUI Flags
+
+```bash
+uplift --home
+```
+
+Opens the file picker in the user's home directory instead of the profile's local base.
+
+```bash
+uplift --files-list files.txt
+```
+
+Reads relative file paths from a text file (one per line, `#` for comments) and skips manual file selection, jumping directly to upload confirmation.
+
+```bash
+uplift --home --files-list files.txt
+```
+
+Both flags can be combined.
+
 ### Screens
 
 **Profile picker** — arrow keys to navigate, `enter` to select, `a` to add, `e` to edit, `d` to delete, `q` to quit.
