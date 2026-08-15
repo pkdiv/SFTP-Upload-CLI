@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/easysftp/uplift/internal/config"
 	"github.com/easysftp/uplift/internal/output"
@@ -36,9 +37,10 @@ type Options struct {
 }
 
 type Uploader struct {
-	profile       config.Profile
-	out           *output.Writer
-	connectFn     func(config.Profile) (*sshclient.Client, error)
+	profile   config.Profile
+	out       *output.Writer
+	connectFn func(config.Profile) (*sshclient.Client, error)
+	log       *SessionLog
 }
 
 func New(profile config.Profile, out *output.Writer) *Uploader {
@@ -55,6 +57,24 @@ func NewWithConnect(profile config.Profile, out *output.Writer, connectFn func(c
 		out:       out,
 		connectFn: connectFn,
 	}
+}
+
+func (u *Uploader) SetSessionLog(log *SessionLog) {
+	u.log = log
+}
+
+func (u *Uploader) LogPath() string {
+	if u.log == nil {
+		return ""
+	}
+	return u.log.Path()
+}
+
+func (u *Uploader) CloseLog() error {
+	if u.log == nil {
+		return nil
+	}
+	return u.log.Close()
 }
 
 func (u *Uploader) Resolve(files []string) ([]Job, error) {
@@ -77,6 +97,10 @@ func (u *Uploader) Resolve(files []string) ([]Job, error) {
 		})
 	}
 	return jobs, nil
+}
+
+func (u *Uploader) ConnectFn() func(config.Profile) (*sshclient.Client, error) {
+	return u.connectFn
 }
 
 func (u *Uploader) Upload(jobs []Job, opts Options) ([]Result, error) {
@@ -111,45 +135,59 @@ func (u *Uploader) Upload(jobs []Job, opts Options) ([]Result, error) {
 func (u *Uploader) uploadOne(job Job, opts Options) Result {
 	conn, err := u.connectFn(u.profile)
 	if err != nil {
+		u.recordLog(job, "failed", err.Error(), 0)
 		return Result{Job: job, Err: err}
 	}
 	defer conn.Close()
 
 	sftpClient, err := conn.NewSFTPClient()
 	if err != nil {
+		u.recordLog(job, "failed", err.Error(), 0)
 		return Result{Job: job, Err: err}
 	}
 	defer sftpClient.Close()
 
 	exists, err := sftpClient.Exists(job.RemotePath)
 	if err != nil {
+		u.recordLog(job, "failed", err.Error(), 0)
 		return Result{Job: job, Err: fmt.Errorf("check remote file: %w", err)}
 	}
 	if exists {
 		if opts.OverwriteCheck != nil {
 			ok, err := opts.OverwriteCheck(job.RemotePath)
 			if err != nil {
+				u.recordLog(job, "failed", err.Error(), 0)
 				return Result{Job: job, Err: err}
 			}
 			if !ok {
+				u.recordLog(job, "skipped", "overwrite declined", 0)
 				return Result{Job: job, Skipped: true}
 			}
 		}
 	} else if opts.CreateRemote {
 		dir := filepath.ToSlash(filepath.Dir(job.RemotePath))
 		if err := sftpClient.MkdirAll(dir); err != nil {
+			u.recordLog(job, "failed", err.Error(), 0)
 			return Result{Job: job, Err: fmt.Errorf("create remote directory %s: %w", dir, err)}
 		}
 	}
 
 	localFile, err := os.Open(job.LocalPath)
 	if err != nil {
+		u.recordLog(job, "failed", err.Error(), 0)
 		return Result{Job: job, Err: fmt.Errorf("open local file: %w", err)}
 	}
 	defer localFile.Close()
 
+	localInfo, _ := localFile.Stat()
+	localSize := int64(0)
+	if localInfo != nil {
+		localSize = localInfo.Size()
+	}
+
 	remoteFile, err := sftpClient.Create(job.RemotePath)
 	if err != nil {
+		u.recordLog(job, "failed", err.Error(), localSize)
 		return Result{Job: job, Err: fmt.Errorf("create remote file: %w", err)}
 	}
 
@@ -157,14 +195,32 @@ func (u *Uploader) uploadOne(job Job, opts Options) Result {
 
 	if _, err := io.Copy(remoteFile, localFile); err != nil {
 		remoteFile.Close()
+		u.recordLog(job, "failed", err.Error(), localSize)
 		return Result{Job: job, Err: fmt.Errorf("copy file: %w", err)}
 	}
 	if err := remoteFile.Close(); err != nil {
+		u.recordLog(job, "failed", err.Error(), localSize)
 		return Result{Job: job, Err: fmt.Errorf("close remote file: %w", err)}
 	}
 
+	u.recordLog(job, "uploaded", "", localSize)
 	u.out.Printf("[%d/%d] ✓ Uploaded %s\n", job.Index, job.Total, job.RelPath)
 	return Result{Job: job, Success: true}
+}
+
+func (u *Uploader) recordLog(job Job, status, errMsg string, size int64) {
+	if u.log == nil {
+		return
+	}
+	u.log.Record(LogEntry{
+		Timestamp:  time.Now().Format("2006-01-02 15:04:05"),
+		RelPath:    job.RelPath,
+		LocalPath:  job.LocalPath,
+		RemotePath: job.RemotePath,
+		LocalSize:  size,
+		Status:     status,
+		Error:      errMsg,
+	})
 }
 
 func (u *Uploader) Summarize(results []Result) (uploaded, skipped, failed int) {

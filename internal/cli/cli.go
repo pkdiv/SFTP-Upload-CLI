@@ -12,6 +12,7 @@ import (
 	"github.com/easysftp/uplift/internal/config"
 	"github.com/easysftp/uplift/internal/confirmation"
 	"github.com/easysftp/uplift/internal/output"
+	"github.com/easysftp/uplift/internal/tui"
 	"github.com/easysftp/uplift/internal/uploader"
 )
 
@@ -28,8 +29,7 @@ func New(configPath string, in io.Reader, out io.Writer, errOut io.Writer) *App 
 
 func (a *App) Run(args []string) int {
 	if len(args) == 0 {
-		a.usage()
-		return 2
+		return a.runTUI()
 	}
 
 	switch args[0] {
@@ -45,6 +45,20 @@ func (a *App) Run(args []string) int {
 		a.usage()
 		return 2
 	}
+}
+
+func (a *App) runTUI() int {
+	cfg, err := a.loadConfig()
+	if err != nil {
+		fmt.Fprintf(a.ErrOut, "error: %v\n", err)
+		return 1
+	}
+
+	if err := tui.Run(cfg, a.ConfigPath); err != nil {
+		fmt.Fprintf(a.ErrOut, "error: %v\n", err)
+		return 1
+	}
+	return 0
 }
 
 func (a *App) usage() {
