@@ -112,8 +112,9 @@ func TestValidateLocalFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != file {
-		t.Fatalf("got %q, want %q", got, file)
+	want := resolveSymlinks(t, file)
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
 	}
 }
 
@@ -175,9 +176,19 @@ func TestValidateLocalFileSymlinkInside(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != target {
-		t.Fatalf("got %q, want %q", got, target)
+	want := resolveSymlinks(t, target)
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
 	}
+}
+
+func resolveSymlinks(t *testing.T, path string) string {
+	t.Helper()
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resolved
 }
 
 func TestValidateLocalFileBrokenSymlink(t *testing.T) {

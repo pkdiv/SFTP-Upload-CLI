@@ -26,12 +26,15 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
 
       - name: Build
         run: go build -o ${{ matrix.binary }} ./cmd/sftp-upload
+        timeout-minutes: 10
 
       - name: Test
         run: go test ./...
+        timeout-minutes: 10
 
       - name: Upload binary
         uses: actions/upload-artifact@v4

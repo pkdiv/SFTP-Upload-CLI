@@ -76,28 +76,33 @@ func ValidateLocalFile(base, rel string) (string, error) {
 		return "", err
 	}
 
-	info, err := os.Lstat(full)
+	cleanBase, err := filepath.Abs(base)
+	if err != nil {
+		return "", fmt.Errorf("resolve local base: %w", err)
+	}
+	cleanBase = filepath.Clean(cleanBase)
+
+	resolvedBase, err := filepath.EvalSymlinks(cleanBase)
+	if err != nil {
+		return "", fmt.Errorf("resolve local base symlinks: %w", err)
+	}
+	resolvedBase = filepath.Clean(resolvedBase)
+
+	resolved, err := filepath.EvalSymlinks(full)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", fmt.Errorf("local file does not exist: %s", full)
 		}
-		return "", fmt.Errorf("stat local file %s: %w", full, err)
+		return "", fmt.Errorf("resolve local file %s: %w", full, err)
 	}
 
-	if info.Mode()&os.ModeSymlink != 0 {
-		resolved, err := filepath.EvalSymlinks(full)
-		if err != nil {
-			return "", fmt.Errorf("broken symlink %s: %w", full, err)
-		}
-		cleanBase, _ := filepath.Abs(base)
-		cleanBase = filepath.Clean(cleanBase)
-		if !isWithin(cleanBase, filepath.Clean(resolved)) {
-			return "", fmt.Errorf("%w: symlink %s resolves to %s", ErrOutsideBase, full, resolved)
-		}
-		info, err = os.Stat(resolved)
-		if err != nil {
-			return "", fmt.Errorf("stat resolved symlink target %s: %w", resolved, err)
-		}
+	if !isWithin(resolvedBase, resolved) {
+		return "", fmt.Errorf("%w: path %s resolves outside the local base", ErrOutsideBase, full)
+	}
+
+	info, err := os.Stat(resolved)
+	if err != nil {
+		return "", fmt.Errorf("stat local file %s: %w", resolved, err)
 	}
 
 	if info.IsDir() {
@@ -107,13 +112,13 @@ func ValidateLocalFile(base, rel string) (string, error) {
 		return "", fmt.Errorf("path is not a regular file: %s", full)
 	}
 
-	f, err := os.Open(full)
+	f, err := os.Open(resolved)
 	if err != nil {
-		return "", fmt.Errorf("open local file %s: %w", full, err)
+		return "", fmt.Errorf("open local file %s: %w", resolved, err)
 	}
 	f.Close()
 
-	return full, nil
+	return resolved, nil
 }
 
 func cleanRemote(p string) string {

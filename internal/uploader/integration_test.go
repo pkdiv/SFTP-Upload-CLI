@@ -124,7 +124,7 @@ func (s *testServer) handleConn(nConn net.Conn, cfg *ssh.ServerConfig) {
 			}
 		}(requests)
 
-		server, err := sftp.NewServer(channel, sftp.WindowsRootEnumeratesDrives())
+		server, err := sftp.NewServer(channel)
 		if err != nil {
 			channel.Close()
 			continue
@@ -270,10 +270,7 @@ func TestUploaderIntegration(t *testing.T) {
 
 func verifyRemoteFile(t *testing.T, rootDir, remotePath, want string) {
 	t.Helper()
-	// remotePath is a Unix-style path like "/C:/Users/.../file.txt".
-	// On Windows the SFTP server maps "/C:/..." to "C:\...".
-	// Just strip the leading "/" and convert slashes.
-	path := filepath.FromSlash(strings.TrimPrefix(remotePath, "/"))
+	path := remoteToLocalPath(remotePath)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("remote file %s not readable: %v", path, err)
@@ -284,19 +281,27 @@ func verifyRemoteFile(t *testing.T, rootDir, remotePath, want string) {
 }
 
 func toRemotePath(localPath string) string {
-	// On Windows, the SFTP server treats "/C:/..." as "C:\..."
-	// So we convert a Windows drive path to an SFTP-friendly absolute path.
 	abs, err := filepath.Abs(localPath)
 	if err != nil {
 		return localPath
 	}
-	vol := filepath.VolumeName(abs)
-	rest := abs[len(vol):]
-	rest = strings.ReplaceAll(rest, "\\", "/")
-	if vol == "" {
-		return "/" + strings.TrimPrefix(rest, "/")
+	if filepath.Separator == '\\' {
+		vol := filepath.VolumeName(abs)
+		rest := abs[len(vol):]
+		rest = strings.ReplaceAll(rest, "\\", "/")
+		if vol == "" {
+			return "/" + strings.TrimPrefix(rest, "/")
+		}
+		return "/" + strings.TrimSuffix(vol, ":") + ":" + rest
 	}
-	return "/" + strings.TrimSuffix(vol, ":") + ":" + rest
+	return filepath.ToSlash(abs)
+}
+
+func remoteToLocalPath(remotePath string) string {
+	if filepath.Separator == '\\' {
+		return filepath.FromSlash(strings.TrimPrefix(remotePath, "/"))
+	}
+	return remotePath
 }
 
 func mustAtoi(s string) int {

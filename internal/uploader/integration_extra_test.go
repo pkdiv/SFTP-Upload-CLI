@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/easysftp/sftp-upload/internal/config"
@@ -99,7 +98,7 @@ func TestOverwriteDeclinedSkipsUpload(t *testing.T) {
 
 	// Pre-create remote file with old content
 	remoteRoot := toRemotePath(rootDir)
-	remoteFileLocal := filepath.FromSlash(strings.TrimPrefix(remoteRoot+"/existing.txt", "/"))
+	remoteFileLocal := remoteToLocalPath(remoteRoot + "/existing.txt")
 	if err := os.MkdirAll(filepath.Dir(remoteFileLocal), 0o755); err != nil {
 		t.Fatal(err)
 	}
