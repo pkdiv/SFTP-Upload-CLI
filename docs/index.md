@@ -149,4 +149,4 @@ remote_base + relative path = complete remote path
 
 ## Download
 
-Prebuilt binaries are published as GitHub Releases. See the [Releases](https://github.com/pkdiv/SFTP-Upload-CLI/releases) page.
+Prebuilt binaries are published as GitHub Releases. See the [Releases](https://github.com/pkdiv/uplift/releases) page.

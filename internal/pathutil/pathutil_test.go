@@ -205,3 +205,4 @@ func TestValidateLocalFileBrokenSymlink(t *testing.T) {
 	}
 }
 
+

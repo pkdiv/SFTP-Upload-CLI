@@ -14,9 +14,9 @@ import (
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/easysftp/uplift/internal/config"
-	"github.com/easysftp/uplift/internal/output"
-	"github.com/easysftp/uplift/internal/sshclient"
+	"github.com/pkdiv/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/output"
+	"github.com/pkdiv/uplift/internal/sshclient"
 )
 
 type testServer struct {
@@ -309,4 +309,5 @@ func mustAtoi(s string) int {
 	fmt.Sscanf(s, "%d", &n)
 	return n
 }
+
 

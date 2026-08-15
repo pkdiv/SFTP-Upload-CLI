@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/easysftp/uplift/internal/config"
-	"github.com/easysftp/uplift/internal/output"
-	"github.com/easysftp/uplift/internal/sshclient"
+	"github.com/pkdiv/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/output"
+	"github.com/pkdiv/uplift/internal/sshclient"
 )
 
 func TestConcurrencyLimitEnforced(t *testing.T) {
@@ -190,4 +190,5 @@ func TestGenerateKeyPEMRoundtrip(t *testing.T) {
 		t.Fatal("empty PEM")
 	}
 }
+
 

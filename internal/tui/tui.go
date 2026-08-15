@@ -12,9 +12,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/easysftp/uplift/internal/config"
-	"github.com/easysftp/uplift/internal/output"
-	"github.com/easysftp/uplift/internal/uploader"
+	"github.com/pkdiv/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/output"
+	"github.com/pkdiv/uplift/internal/uploader"
 )
 
 type screen int
@@ -958,3 +958,4 @@ func Run(cfg *config.Config, configPath string) error {
 	_, err := p.Run()
 	return err
 }
+

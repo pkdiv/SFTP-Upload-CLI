@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/easysftp/uplift/internal/config"
-	"github.com/easysftp/uplift/internal/output"
-	"github.com/easysftp/uplift/internal/pathutil"
-	"github.com/easysftp/uplift/internal/sshclient"
+	"github.com/pkdiv/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/output"
+	"github.com/pkdiv/uplift/internal/pathutil"
+	"github.com/pkdiv/uplift/internal/sshclient"
 )
 
 type Job struct {
@@ -236,4 +236,5 @@ func (u *Uploader) Summarize(results []Result) (uploaded, skipped, failed int) {
 	}
 	return
 }
+
 

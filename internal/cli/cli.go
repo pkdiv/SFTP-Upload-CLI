@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/easysftp/uplift/internal/config"
-	"github.com/easysftp/uplift/internal/confirmation"
-	"github.com/easysftp/uplift/internal/output"
-	"github.com/easysftp/uplift/internal/tui"
-	"github.com/easysftp/uplift/internal/uploader"
+	"github.com/pkdiv/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/confirmation"
+	"github.com/pkdiv/uplift/internal/output"
+	"github.com/pkdiv/uplift/internal/tui"
+	"github.com/pkdiv/uplift/internal/uploader"
 )
 
 type App struct {
@@ -547,4 +547,5 @@ func (a *App) profileRemove(name string) int {
 	fmt.Fprintf(a.Out, "✓ Profile %q removed.\n", name)
 	return 0
 }
+
 

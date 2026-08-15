@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/easysftp/uplift/internal/cli"
-	"github.com/easysftp/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/cli"
+	"github.com/pkdiv/uplift/internal/config"
 )
 
 func main() {
@@ -26,4 +26,5 @@ func main() {
 	app := cli.New(path, os.Stdin, os.Stdout, os.Stderr)
 	os.Exit(app.Run(flag.Args()))
 }
+
 

@@ -69,3 +69,4 @@ func (l *SessionLog) Path() string {
 	}
 	return l.file.Name()
 }
+

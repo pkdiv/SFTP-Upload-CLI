@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
 
-	"github.com/easysftp/uplift/internal/config"
+	"github.com/pkdiv/uplift/internal/config"
 )
 
 type Client struct {
@@ -126,4 +126,5 @@ func (c *Client) NewSFTPClient() (*SFTPClient, error) {
 	}
 	return &SFTPClient{client: client}, nil
 }
+
 

@@ -1,4 +1,4 @@
-module github.com/easysftp/uplift
+module github.com/pkdiv/uplift
 
 go 1.26.1
 
