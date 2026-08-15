@@ -3,6 +3,7 @@ name: Build
 on:
   push:
     branches: [main]
+    tags: ["v*"]
 
 jobs:
   build:
@@ -62,9 +63,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes || true
-          gh release create latest \
-            --title "Latest build" \
-            --notes "Automated build from commit ${{ github.sha }}." \
-            dist/*
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Release $TAG" \
+              dist/*
+          else
+            gh release delete latest --yes || true
+            gh release create latest \
+              --title "Latest build" \
+              --notes "Automated build from commit ${{ github.sha }}." \
+              dist/*
+          fi
 
