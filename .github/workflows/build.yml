@@ -33,6 +33,10 @@ jobs:
         run: go build -o ${{ matrix.binary }} ./cmd/uplift
         timeout-minutes: 10
 
+      - name: Ad-hoc sign (macOS)
+        if: matrix.os == 'macos-latest'
+        run: codesign --force --sign - ${{ matrix.binary }}
+
       - name: Test
         run: go test ./...
         timeout-minutes: 10
@@ -76,4 +80,3 @@ jobs:
               --notes "Automated build from commit ${{ github.sha }}." \
               dist/*
           fi
-
